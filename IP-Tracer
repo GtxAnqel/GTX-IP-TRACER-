@@ -1,66 +1,66 @@
 #!/bin/bash
 
 clear
+figlet "GTX IP-TRACER" | lolcat
 
-# ASCII başlık
-figlet "GTX IP-TRACER"
-
-# Tanıtım
-echo -e "\e[34m──────────────────────────────────────────────────────"
-echo -e "  Bu araç GtxAnqel tarafından geliştirilmiştir."
-echo -e "  Tamamen yerli ve Türkçe olarak hazırlanmıştır."
-echo -e "──────────────────────────────────────────────────────\e[0m"
+echo ""
+echo -e "\033[33m---------------------------------------------\033[0m"
+echo -e "               \033[93mKULLANIM KILAVUZU\033[0m"
+echo -e "\033[33m---------------------------------------------\033[0m"
+echo -e "\033[38;5;214mGTX-MN\033[0m yazarsanız tekrar kullanım kılavuzuna ulaşırsınız."
+echo -e "\033[92mGTX-M\033[0m yazarsanız kendi IP adresinize bakarsınız."
+echo -e "Lütfen \033[96m78.225.178.98\033[0m veya \033[96m4.6.2.6\033[0m gibi IP'ler girin."
+echo -e ""
+echo -e "Bu araç \033[35mGtxAnqel\033[0m tarafından Türkçe ve yerli yapılmıştır."
+echo -e "Herkese saygılarımla."
 echo ""
 
-# Kullanım kılavuzu
-function kullanici_kilavuzu {
-    echo ""
-    echo "╭──────────────── KULLANIM KILAVUZU ───────────────╮"
-    echo "│                                                  │"
-    echo "│  🔹 IP girerek konum ve bilgiler alınabilir.     │"
-    echo "│     Örnek: 78.225.167.98                         │"
-    echo "│                                                  │"
-    echo "│  🔹 GTX-M : Kendi IP ve konum bilgilerini göster.│"
-    echo "│  🔹 GTX-MN: Bu kullanım ekranını getirir.        │"
-    echo "╰──────────────────────────────────────────────────╯"
-}
-
-# IP bilgi gösterme fonksiyonu
 function bilgi_goster {
     ip="$1"
-    echo ""
-    echo "[!] Bilgiler alınıyor..."
-    data=$(curl -s ipinfo.io/$ip)
+    echo -e "\033[93m[!] Bilgiler alınıyor... Lütfen bekleyin.\033[0m"
 
-    city=$(echo "$data" | grep '"city"' | cut -d '"' -f4)
-    region=$(echo "$data" | grep '"region"' | cut -d '"' -f4)
-    country=$(echo "$data" | grep '"country"' | cut -d '"' -f4)
-    loc=$(echo "$data" | grep '"loc"' | cut -d '"' -f4)
+    data=$(curl -s "http://ip-api.com/json/$ip?fields=status,country,regionName,city,district,zip,lat,lon,message")
 
+    status=$(echo "$data" | grep -oP '(?<="status":")[^"]+')
+
+    if [[ "$status" != "success" ]]; then
+        message=$(echo "$data" | grep -oP '(?<="message":")[^"]+')
+        echo -e "\033[31m[!] Hata: $message\033[0m"
+        return
+    fi
+
+    country=$(echo "$data" | grep -oP '(?<="country":")[^"]+')
+    region=$(echo "$data" | grep -oP '(?<="regionName":")[^"]+')
+    city=$(echo "$data" | grep -oP '(?<="city":")[^"]+')
+    district=$(echo "$data" | grep -oP '(?<="district":")[^"]+')
+    zip=$(echo "$data" | grep -oP '(?<="zip":")[^"]+')
+    lat=$(echo "$data" | grep -oP '(?<="lat":)[^,]+')
+    lon=$(echo "$data" | grep -oP '(?<="lon":")[^,}]+')
+
+    [[ -z "$district" ]] && district="Bilinmiyor"
+    [[ -z "$zip" ]] && zip="Bilinmiyor"
+
+    echo -e "\033[92mIP BİLGİSİ:"
+    echo -e "\033[0m  IP        : $ip"
+    echo -e "  Ülke      : $country"
+    echo -e "  Bölge     : $region"
+    echo -e "  Şehir     : $city"
+    echo -e "  İlçe      : $district"
+    echo -e "  Posta Kodu: $zip"
+    echo -e "  Koordinat : $lat, $lon"
+    echo -e "  Harita    : https://maps.google.com/?q=$lat,$lon"
     echo ""
-    echo "╭──────────── IP BİLGİSİ ─────────────╮"
-    echo "│  IP           : $ip"
-    echo "│  Ülke         : $country"
-    echo "│  Şehir        : $city"
-    echo "│  Bölge        : $region"
-    echo "│  Koordinat    : $loc"
-    echo "│  Google Maps  : https://maps.google.com?q=$loc"
-    echo "╰──────────────────────────────────────╯"
 }
 
-# Kullanıcı girişi döngüsü
-while true; do
-    echo ""
-    read -p "🔍 IP adresi ya da komut (GTX-M / GTX-MN): " girdi
+read -p $'\033[33m🔍 IP adresi ya da komut (GTX-M / GTX-MN): \033[0m' girdi
 
-    if [[ "$girdi" == "GTX-M" ]]; then
-        ip=$(curl -s ifconfig.me)
-        bilgi_goster $ip
-    elif [[ "$girdi" == "GTX-MN" ]]; then
-        kullanici_kilavuzu
-    elif [[ "$girdi" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        bilgi_goster $girdi
-    else
-        echo "[!] Geçersiz giriş. Lütfen doğru IP ya da komut girin."
-    fi
-done
+if [[ "$girdi" == "GTX-M" ]]; then
+    ip=$(curl -s ifconfig.me)
+    bilgi_goster "$ip"
+elif [[ "$girdi" == "GTX-MN" ]]; then
+    exec "$0"
+elif [[ "$girdi" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    bilgi_goster "$girdi"
+else
+    echo -e "\033[31m[!] Geçersiz giriş. Lütfen geçerli bir IP ya da komut girin.\033[0m"
+fi
