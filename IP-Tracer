@@ -1,0 +1,66 @@
+#!/bin/bash
+
+clear
+
+# ASCII başlık
+figlet "GTX IP-TRACER"
+
+# Tanıtım
+echo -e "\e[34m──────────────────────────────────────────────────────"
+echo -e "  Bu araç GtxAnqel tarafından geliştirilmiştir."
+echo -e "  Tamamen yerli ve Türkçe olarak hazırlanmıştır."
+echo -e "──────────────────────────────────────────────────────\e[0m"
+echo ""
+
+# Kullanım kılavuzu
+function kullanici_kilavuzu {
+    echo ""
+    echo "╭──────────────── KULLANIM KILAVUZU ───────────────╮"
+    echo "│                                                  │"
+    echo "│  🔹 IP girerek konum ve bilgiler alınabilir.     │"
+    echo "│     Örnek: 78.225.167.98                         │"
+    echo "│                                                  │"
+    echo "│  🔹 GTX-M : Kendi IP ve konum bilgilerini göster.│"
+    echo "│  🔹 GTX-MN: Bu kullanım ekranını getirir.        │"
+    echo "╰──────────────────────────────────────────────────╯"
+}
+
+# IP bilgi gösterme fonksiyonu
+function bilgi_goster {
+    ip="$1"
+    echo ""
+    echo "[!] Bilgiler alınıyor..."
+    data=$(curl -s ipinfo.io/$ip)
+
+    city=$(echo "$data" | grep '"city"' | cut -d '"' -f4)
+    region=$(echo "$data" | grep '"region"' | cut -d '"' -f4)
+    country=$(echo "$data" | grep '"country"' | cut -d '"' -f4)
+    loc=$(echo "$data" | grep '"loc"' | cut -d '"' -f4)
+
+    echo ""
+    echo "╭──────────── IP BİLGİSİ ─────────────╮"
+    echo "│  IP           : $ip"
+    echo "│  Ülke         : $country"
+    echo "│  Şehir        : $city"
+    echo "│  Bölge        : $region"
+    echo "│  Koordinat    : $loc"
+    echo "│  Google Maps  : https://maps.google.com?q=$loc"
+    echo "╰──────────────────────────────────────╯"
+}
+
+# Kullanıcı girişi döngüsü
+while true; do
+    echo ""
+    read -p "🔍 IP adresi ya da komut (GTX-M / GTX-MN): " girdi
+
+    if [[ "$girdi" == "GTX-M" ]]; then
+        ip=$(curl -s ifconfig.me)
+        bilgi_goster $ip
+    elif [[ "$girdi" == "GTX-MN" ]]; then
+        kullanici_kilavuzu
+    elif [[ "$girdi" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        bilgi_goster $girdi
+    else
+        echo "[!] Geçersiz giriş. Lütfen doğru IP ya da komut girin."
+    fi
+done
